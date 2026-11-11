@@ -1,0 +1,170 @@
+services:
+  proxy:
+    image: nginx:latest
+    container_name: proxy_reverso
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - net_proxy
+      - net_app1
+      - net_app2
+      - net_app3
+    depends_on:
+      - app1
+      - app2
+      - app3
+
+  app1:
+    image: wordpress:latest
+    container_name: app1_wordpress
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db1
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wpuser
+      WORDPRESS_DB_PASSWORD: wpsenha123
+    networks:
+      - net_app1
+      - net_db1
+    depends_on:
+      - db1
+
+  db1:
+    image: mysql:8.0
+    container_name: db1_mysql
+    command: --innodb-buffer-pool-size=64M
+    restart: always
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wpuser
+      MYSQL_PASSWORD: wpsenha123
+      MYSQL_ROOT_PASSWORD: rootsenha123
+    volumes:
+      - db1_data:/var/lib/mysql
+    networks:
+      - net_db1
+
+  gui1:
+    image: phpmyadmin:latest
+    container_name: gui1_phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db1
+    ports:
+      - "8091:80"
+    networks:
+      - net_db1
+    depends_on:
+      - db1
+
+  app2:
+    build:
+      context: ./repo-php
+      dockerfile: ../php.Dockerfile
+    container_name: app2_php
+    restart: always
+    networks:
+      - net_app2
+      - net_db2
+    depends_on:
+      - db2
+
+  db2:
+    image: mysql:8.0
+    container_name: db2_mysql
+    command: --innodb-buffer-pool-size=64M
+    restart: always
+    environment:
+      MYSQL_DATABASE: tem_quase_tudo_db
+      MYSQL_USER: app2user
+      MYSQL_PASSWORD: app2senha123
+      MYSQL_ROOT_PASSWORD: rootsenha123
+    volumes:
+      - db2_data:/var/lib/mysql
+      - ./php-db-init/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    networks:
+      - net_db2
+
+  gui2:
+    image: phpmyadmin:latest
+    container_name: gui2_phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db2
+    ports:
+      - "8092:80"
+    networks:
+      - net_db2
+    depends_on:
+      - db2
+
+  app3:
+    build:
+      context: ./repo-django2
+    container_name: app3_django
+    restart: always
+    environment:
+      DJANGO_SETTINGS_MODULE: projeto.settings
+      DB_HOST: db3
+      DB_NAME: app3db
+      DB_USER: app3user
+      DB_PASSWORD: app3senha123
+      DB_PORT: "3306"
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    networks:
+      - net_app3
+      - net_db3
+    depends_on:
+      - db3
+
+  db3:
+    image: mysql:8.4
+    container_name: db3_mysql
+    command: --innodb-buffer-pool-size=64M
+    restart: always
+    environment:
+      MYSQL_DATABASE: app3db
+      MYSQL_USER: app3user
+      MYSQL_PASSWORD: app3senha123
+      MYSQL_ROOT_PASSWORD: rootsenha123
+    volumes:
+      - db3_data:/var/lib/mysql
+    networks:
+      - net_db3
+
+  gui3:
+    image: phpmyadmin:latest
+    container_name: gui3_phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db3
+    ports:
+      - "8093:80"
+    networks:
+      - net_db3
+    depends_on:
+      - db3
+
+networks:
+  net_proxy:
+    external: true
+  net_app1:
+    external: true
+  net_db1:
+    external: true
+  net_app2:
+    external: true
+  net_db2:
+    external: true
+  net_app3:
+    external: true
+  net_db3:
+    external: true
+
+volumes:
+  db1_data:
+  db2_data:
+  db3_data:

@@ -1,0 +1,37 @@
+   services:
+     wordpress:
+       image: wordpress:latest
+       container_name: wp_app
+       restart: always
+       ports:
+         - "8080:80"
+       environment:
+         WORDPRESS_DB_HOST: wp_mysql
+         WORDPRESS_DB_NAME: wordpress
+         WORDPRESS_DB_USER: wpuser
+         WORDPRESS_DB_PASSWORD: wpsenha123
+       depends_on:
+         - mysql
+       networks:
+         - wp_network
+
+     mysql:
+       image: mysql:8.0
+       container_name: wp_mysql
+       restart: always
+       environment:
+         MYSQL_DATABASE: wordpress
+         MYSQL_USER: wpuser
+         MYSQL_PASSWORD: wpsenha123
+         MYSQL_ROOT_PASSWORD: rootsenha123
+       volumes:
+         - wp_db_data:/var/lib/mysql
+       networks:
+         - wp_network
+
+   networks:
+     wp_network:
+       driver: bridge
+
+   volumes:
+     wp_db_data:

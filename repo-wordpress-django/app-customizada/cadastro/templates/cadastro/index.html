@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head><title>App Customizada</title></head>
+<body>
+    <h1>Cadastro de Mensagens</h1>
+    <form method="POST">
+        {% csrf_token %}
+        Nome: <input type="text" name="nome" required><br>
+        Mensagem: <input type="text" name="mensagem" required><br>
+        <button type="submit">Enviar</button>
+    </form>
+    <hr>
+    <h2>Registros salvos no MySQL:</h2>
+    <ul>
+    {% for r in registros %}
+       <li>{{ r.nome }}: {{ r.mensagem }} ({{ r.criado_em }})</li>
+    {% endfor %}
+    </ul>
+</body>
+</html>
